@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useCallback, useState, TouchEvent } from "react";
-import sdk, { type FrameContext } from "@farcaster/frame-sdk";
-import { Button } from "~/components/ui/Button";
+import sdk from "@farcaster/frame-sdk";
+import Image from 'next/image';
 
 const LoadingDots = () => (
   <div className="flex gap-1 justify-center items-center h-8">
@@ -90,10 +90,12 @@ const ImageCarousel = () => {
           className="absolute w-full h-full transition-opacity duration-500"
           style={{ opacity: 1 }}
         >
-          <img 
+          <Image 
             src={images[currentIndex]} 
             alt={`Sweater ${currentIndex + 1}`}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            unoptimized // Since these are external images
           />
         </div>
       </div>
@@ -130,8 +132,6 @@ const ImageCarousel = () => {
 
 export default function Demo() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [context, setContext] = useState<FrameContext>();
-  const [isContextOpen, setIsContextOpen] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
   const [isEmbedLoaded, setIsEmbedLoaded] = useState(false);
 
@@ -141,7 +141,7 @@ export default function Demo() {
 
   useEffect(() => {
     const load = async () => {
-      setContext(await sdk.context);
+      await sdk.context;
       sdk.actions.ready({});
     };
     if (sdk && !isSDKLoaded) {
@@ -174,17 +174,13 @@ export default function Demo() {
     sdk.actions.openUrl("https://highlight.xyz/mint/zero:0x75B49d18A54564421e27bb5c34B8a502A42c8995");
   }, []);
 
-  const toggleContext = useCallback(() => {
-    setIsContextOpen((prev) => !prev);
-  }, []);
-
   if (!isSDKLoaded) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="w-[300px] mx-auto py-4 px-2">
-      <h1 className="text-2xl font-bold text-left ">Beautiful Sweaters</h1>
+      <h1 className="text-2xl font-bold text-left">Beautiful Sweaters</h1>
       <span className="text-sm text-gray-600 dark:text-gray-400 block mb-4">Generative project by @eduxdux</span>
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 cursor-pointer hover:underline" onClick={openUrl}>
         Project link ⤴
