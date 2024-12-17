@@ -2,8 +2,6 @@
 
 import Demo from "~/components/Demo";
 
-export default function App(
-  { title }: { title?: string } = { title: "Beautiful Sweaters" }
-) {
+export default function App() {
   return <Demo />;
 }
