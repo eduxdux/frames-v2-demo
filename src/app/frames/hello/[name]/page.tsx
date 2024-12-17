@@ -1,47 +1,33 @@
 import { Metadata } from "next";
 import App from "~/app/app";
 
-const appUrl = process.env.NEXT_PUBLIC_URL;
-
-interface Props {
+type Props = {
   params: Promise<{
     name: string;
   }>;
-}
+};
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: Props): Promise<Metadata> {
   const { name } = await params;
-
-  const frame = {
-    version: "next",
-    imageUrl: `${appUrl}/frames/hello/${name}/opengraph-image`,
-    button: {
-      title: "Launch Frame",
-      action: {
-        type: "launch_frame",
-        name: "Farcaster Frames v2 Demo",
-        url: `${appUrl}/frames/hello/${name}/`,
-        splashImageUrl: `${appUrl}/splash.png`,
-        splashBackgroundColor: "#f7f7f7",
-      },
-    },
-  };
 
   return {
-    title: `Hello, ${name}`,
-    description: `A personalized hello frame for ${name}`,
+    title: "Beautiful Sweaters",
+    description: "A Beautiful Sweaters app",
     openGraph: {
-      title: `Hello, ${name}`,
-      description: `A personalized hello frame for ${name}`,
+      title: "Beautiful Sweaters",
+      description: "A Beautiful Sweaters app",
     },
     other: {
-      "fc:frame": JSON.stringify(frame),
+      "fc:frame": "vNext",
+      "fc:frame:image": `${process.env.NEXT_PUBLIC_HOST}/api/og?name=${name}`,
+      "fc:frame:button:1": "Next",
+      "fc:frame:post_url": `${process.env.NEXT_PUBLIC_HOST}/api/frame?name=${name}`,
     },
   };
 }
 
-export default async function HelloNameFrame({ params }: Props) {
-  const { name } = await params;
-
+export default async function HelloNameFrame() {
   return <App />;
 }
