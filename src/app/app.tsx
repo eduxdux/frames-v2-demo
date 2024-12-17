@@ -1,13 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
-const Demo = dynamic(() => import("~/components/Demo"), {
-  ssr: false,
-});
+import Demo from "~/components/Demo";
 
 export default function App(
-  { title }: { title?: string } = { title: "Frames v2 Demo" }
+  { title }: { title?: string } = { title: "Beautiful Sweaters" }
 ) {
-  return <Demo title={title} />;
+  return <Demo />;
 }
