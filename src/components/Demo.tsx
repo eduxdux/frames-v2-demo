@@ -1,18 +1,141 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, TouchEvent } from "react";
 import sdk, { type FrameContext } from "@farcaster/frame-sdk";
 import { Button } from "~/components/ui/Button";
 
-export default function Demo(
-  { title }: { title?: string } = { title: "Beautiful sweaters" }
-) {
+const LoadingDots = () => (
+  <div className="flex gap-1 justify-center items-center h-8">
+    {[0, 1, 2].map((i) => (
+      <div
+        key={i}
+        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+        style={{ 
+          animation: `bounce 1s infinite ${i * 0.2}s`,
+        }}
+      />
+    ))}
+  </div>
+);
+
+const SkeletonLoader = () => (
+  <div className="animate-pulse space-y-4 w-full max-w-[300px]">
+    <div className="h-[200px] bg-gray-200 dark:bg-gray-700 rounded-lg" />
+  </div>
+);
+
+const ImageCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const images = [
+    "https://pbs.twimg.com/media/GfBnXdvWQAADxax?format=jpg&name=medium",
+    "https://pbs.twimg.com/media/GfBnVL3WIAA90rg?format=jpg&name=medium",
+    "https://pbs.twimg.com/media/GfBnWihXwAAL8Dn?format=jpg&name=medium",
+    "https://pbs.twimg.com/media/Ge7RGGUWsAAzHC1?format=jpg&name=medium",
+    "https://pbs.twimg.com/media/GezmLscXcAABKgh?format=jpg&name=medium"
+  ];
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleTouchStart = (e: TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    setTouchEnd(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(distance) < minSwipeDistance) return;
+
+    if (distance > 0) {
+      // Swiped left
+      nextSlide();
+    } else {
+      // Swiped right
+      prevSlide();
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
+  return (
+    <div className="relative w-full mb-6">
+      <div 
+        className="relative w-full aspect-square overflow-hidden rounded-lg"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Images */}
+        <div 
+          className="absolute w-full h-full transition-opacity duration-500"
+          style={{ opacity: 1 }}
+        >
+          <img 
+            src={images[currentIndex]} 
+            alt={`Sweater ${currentIndex + 1}`}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+
+      {/* Navigation arrows */}
+      <button
+        onClick={prevSlide}
+        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+      >
+        ←
+      </button>
+      <button
+        onClick={nextSlide}
+        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+      >
+        →
+      </button>
+
+      {/* Navigation dots */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`w-2 h-2 rounded-full transition-colors ${
+              index === currentIndex ? 'bg-white' : 'bg-white/50'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default function Demo() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<FrameContext>();
   const [isContextOpen, setIsContextOpen] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
+  const [isEmbedLoaded, setIsEmbedLoaded] = useState(false);
 
-  const shortText = "The essence of this collection is to celebrate beautiful sweaters, offering a contrast to the popular trend of 'ugly sweaters.' This concept of flamboyant and intentionally 'ugly' sweaters has become a well-known tradition in Northern countries, particularly during Christmas festivities when winter brings its cozy charm...";
+  const shortText = "The essence of this collection is to celebrate beautiful sweaters, offering a contrast to the popular trend of 'ugly sweaters.' This conce...";
   
   const fullText = "The essence of this collection is to celebrate beautiful sweaters, offering a contrast to the popular trend of 'ugly sweaters.' This concept of flamboyant and intentionally 'ugly' sweaters has become a well-known tradition in Northern countries, particularly during Christmas festivities when winter brings its cozy charm. However, not all sweaters need to be defined by this stereotype. Here in Brazil, where the colder season has its unique allure, sweaters are often crafted with care and affection. Each stitch and detail carries an expression of dedication, reflecting the natural beauty that skilled craftsmanship can offer. More than just clothing, they are manifestations of warmth and authenticity, translating human connection into the art of textile creation.";
 
@@ -35,6 +158,11 @@ export default function Demo(
     script.type = "module";
     script.crossOrigin = "true";
     script.dataset.embedVersion = "2.0";
+    
+    script.onload = () => {
+      setIsEmbedLoaded(true);
+    };
+    
     document.body.appendChild(script);
 
     return () => {
@@ -56,7 +184,8 @@ export default function Demo(
 
   return (
     <div className="w-[300px] mx-auto py-4 px-2">
-      <h1 className="text-2xl font-bold text-left mb-4">Beautiful Sweaters</h1>
+      <h1 className="text-2xl font-bold text-left ">Beautiful Sweaters</h1>
+      <span className="text-sm text-gray-600 dark:text-gray-400 block mb-4">Generative project by @eduxdux</span>
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 cursor-pointer hover:underline" onClick={openUrl}>
         Project link ⤴
       </p>
@@ -73,38 +202,22 @@ export default function Demo(
         </button>
       </div>
 
-      {/* <div className="mb-4">
-        <h2 className="font-2xl font-bold">Context</h2>
-        <button
-          onClick={toggleContext}
-          className="flex items-center gap-2 transition-colors"
-        >
-          <span
-            className={`transform transition-transform ${
-              isContextOpen ? "rotate-90" : ""
-            }`}
-          >
-            ➤
-          </span>
-          Tap to expand
-        </button>
+      <ImageCarousel />
 
-        {isContextOpen && (
-          <div className="p-4 mt-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-              {JSON.stringify(context, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div> */}
-
-      <div 
-        data-widget="highlight-mint-card" 
-        data-template="no-art" 
-        data-mint-collection-id="6761d2cb1d136b4c0606eec6"
-        className="w-full max-w-[300px]"
-        style={{ transform: 'scale(0.9)', transformOrigin: 'left top' }}
-      />
+      {!isEmbedLoaded ? (
+        <>
+          <LoadingDots />
+          <SkeletonLoader />
+        </>
+      ) : (
+        <div 
+          data-widget="highlight-mint-card" 
+          data-template="no-art" 
+          data-mint-collection-id="6761d2cb1d136b4c0606eec6"
+          className="w-full max-w-[300px]"
+          style={{ transform: 'scale(0.9)', transformOrigin: 'left top' }}
+        />
+      )}
     </div>
   );
 }
